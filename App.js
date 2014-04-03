@@ -1,4 +1,5 @@
 var app = null;
+var portfolioLevel = 1;
 
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
@@ -19,7 +20,7 @@ Ext.define('CustomApp', {
             {   
             	model : "TypeDefinition",
                 fetch : true,
-                filters : [ { property:"Ordinal", operator:"=", value:2} ]
+                filters : [ { property:"Ordinal", operator:"=", value: portfolioLevel } ]
             }
         ];
         return configs;
@@ -31,7 +32,8 @@ Ext.define('CustomApp', {
             var stories = record.get("Stories");
 
             var architectureStory = _.find(stories,function(s) { 
-            	return s.get("Name") == "Architecture Story";
+            	// return s.get("Name") == "Architecture Story";
+                return s.get("Name").indexOf("Architecture Document")!==-1;
             });
 
             if (!_.isUndefined(architectureStory) && !_.isNull(architectureStory)) {
@@ -97,7 +99,6 @@ Ext.define('CustomApp', {
             listeners : {
                 scope : this,
                 load : function(store, data) {
-                	console.log("config",config,data);
                     callback(null,data);
                 }
             }
@@ -113,9 +114,9 @@ Ext.define('CustomApp', {
         
         var find = {
                 '_TypeHierarchy' : { "$in" : ["HierarchicalRequirement"]},
-                '_ProjectHierarchy' : { "$in": app.getContext().getProject().ObjectID },
+                '_ProjectHierarchy' : { "$in": [app.getContext().getProject().ObjectID] },
                 '__At' : 'current',
-                "_ItemHierarchy" : { "$in" : record.get("ObjectID")  }
+                "_ItemHierarchy" : { "$in" : [record.get("ObjectID")]  }
         };
 
         var storeConfig = {
