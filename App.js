@@ -4,37 +4,33 @@ var portfolioLevel = 1;
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
-    items:[
-    ],
-
-    listeners : {
-    },
-
+   
     config: {
 
         defaultSettings : {
             // query : "(State.Name = Developing)"
-            query : ""
+            queryValue : ""
         }
 
     },
 
     getSettingsFields: function() {
 
-        var values = [
+        return [
             {
-                name: 'query',
+                name: 'queryValue',
                 xtype: 'rallytextfield',
-                label : 'query expression to filter initiatives eg. "(State.Name = Developing)"'
+                label : 'query expression' // to filter initiatives eg. (State.Name = Developing)'
             }
         ];
-        return values;
+
     },
 
     launch: function() {
+
         app = this;
 
-        app.query = app.getSetting("query");
+        app.query = app.getSetting("queryValue");
         console.log("query",app.query);
 
 		async.map( app.createPortfolioTypeConfig(), app.wsapiQuery, function(err,results) {
@@ -42,9 +38,11 @@ Ext.define('CustomApp', {
 			console.log( "Showing items of type:" + app.itemType );
         	app.addFeatureGrid();
     	});
+
     },
 
     createPortfolioTypeConfig : function() {
+
     	var configs = [
             {   
             	model : "TypeDefinition",
@@ -53,9 +51,11 @@ Ext.define('CustomApp', {
             }
         ];
         return configs;
+
     },
 
     storyColumn : {  
+
         text: "Architecture", width:150, 
         renderer : function(value, metaData, record, rowIdx, colIdx, store, view) {
             var stories = record.get("Stories");
@@ -85,6 +85,7 @@ Ext.define('CustomApp', {
             	return "";
             }
         }
+
     },
     
     addFeatureGrid : function() {
