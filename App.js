@@ -10,8 +10,32 @@ Ext.define('CustomApp', {
     listeners : {
     },
 
+    config: {
+
+        defaultSettings : {
+            // query : "(State.Name = Developing)"
+            query : ""
+        }
+
+    },
+
+    getSettingsFields: function() {
+
+        var values = [
+            {
+                name: 'query',
+                xtype: 'rallytextfield',
+                label : 'query expression to filter initiatives eg. "(State.Name = Developing)"'
+            }
+        ];
+        return values;
+    },
+
     launch: function() {
         app = this;
+
+        app.query = app.getSetting("query");
+        console.log("query",app.query);
 
 		async.map( app.createPortfolioTypeConfig(), app.wsapiQuery, function(err,results) {
 			app.itemType = _.flatten(results)[0].get("TypePath");
@@ -31,7 +55,7 @@ Ext.define('CustomApp', {
         return configs;
     },
 
-     storyColumn : {  
+    storyColumn : {  
         text: "Architecture", width:150, 
         renderer : function(value, metaData, record, rowIdx, colIdx, store, view) {
             var stories = record.get("Stories");
@@ -42,7 +66,21 @@ Ext.define('CustomApp', {
             });
 
             if (!_.isUndefined(architectureStory) && !_.isNull(architectureStory)) {
-            	return architectureStory.get("FormattedID") + " - " + architectureStory.get("ScheduleState");
+                console.log("arch story",architectureStory);
+                var ref = "/" + 
+                          _.last(architectureStory.get("_TypeHierarchy")) + 
+                          "/" + 
+                          architectureStory.get("ObjectID");
+                          
+                console.log(ref);
+                var link = (Rally.nav.Manager.getDetailUrl({_ref:ref}));
+                var tpl = Ext.create('Ext.Template', 
+                    "<a href='{ref}' target='_blank'>{content}</a>", 
+                    { compiled : true } 
+                );
+                return tpl.apply({ref:link,content:architectureStory.get("FormattedID") + " - " + architectureStory.get("ScheduleState")});
+
+            	// return architectureStory.get("FormattedID") + " - " + architectureStory.get("ScheduleState");
             } else {
             	return "";
             }
@@ -51,13 +89,26 @@ Ext.define('CustomApp', {
     
     addFeatureGrid : function() {
         var viewport = Ext.create('Ext.Viewport');
+
+        var filter = app.query != "" ?
+            Rally.data.wsapi.Filter.fromQueryString(app.query) :
+            null;
+
+        console.log("filter",filter);
+
         Rally.data.ModelFactory.getModel({
          // type: 'PortfolioItem/Feature',
          type : app.itemType,
          success: function(userStoryModel) {
              viewport.add({
-                 xtype: 'rallygrid',
-                 model: userStoryModel,
+                xtype: 'rallygrid',
+                model: userStoryModel,
+                storeConfig: {
+                    pageSize: 25,
+                    remoteFilter: true,
+                    remoteSort: true,
+                    filters : filter !== null ? [filter] : []
+                },
                  listeners : {
                     load : function(items) {
                         console.log("load",items.data.items);
@@ -72,7 +123,9 @@ Ext.define('CustomApp', {
                  columnCfgs: [
                      'FormattedID',
                      'Name',
+                     'c_LocalizationFlg',
                      'Owner',
+                     'State',
                      app.storyColumn
                  ]
              });
@@ -103,6 +156,7 @@ Ext.define('CustomApp', {
 
         var that = this;
         var fetch = ['ObjectID','FormattedID','Name','ScheduleState','_ItemHierarchy','_TypeHierarchy'];
+        // var fetch = true;
         var hydrate = ['_TypeHierarchy','ScheduleState'];
         
         var find = {
