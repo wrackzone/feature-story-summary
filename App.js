@@ -89,7 +89,7 @@ Ext.define('CustomApp', {
     },
     
     addFeatureGrid : function() {
-        var viewport = Ext.create('Ext.Viewport');
+        // var viewport = Ext.create('Ext.Viewport');
 
         var filter = app.query != "" ?
             Rally.data.wsapi.Filter.fromQueryString(app.query) :
@@ -101,7 +101,7 @@ Ext.define('CustomApp', {
          // type: 'PortfolioItem/Feature',
          type : app.itemType,
          success: function(userStoryModel) {
-             viewport.add({
+             app.add({
                 xtype: 'rallygrid',
                 model: userStoryModel,
                 storeConfig: {
